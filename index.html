@@ -30,6 +30,40 @@
       margin-bottom: 10px;
       color: #333;
     }
+    
+    aside h4 {
+      font-size: 15px;
+      margin: 15px 0 5px 0;
+      color: #555;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 3px;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    aside h4:hover {
+      color: #0078d7;
+    }
+    
+    aside h4::after {
+      content: " ▼";
+      font-size: 0.8em;
+      margin-left: 5px;
+    }
+    
+    aside h4.collapsed::after {
+      content: " ►";
+    }
+    
+    .category-content {
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      max-height: 300px;
+    }
+    
+    .category-content.collapsed {
+      max-height: 0;
+    }
 
     .preset {
       background-color: #e9f1fb;
@@ -122,6 +156,13 @@
       font-size: 22px;
       font-weight: bold;
       box-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .card.highlighted {
+      transform: translateX(-50%) translateY(-15px);
+      box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.7);
+      border: 2px solid gold;
     }
 
     .output-array {
@@ -151,6 +192,8 @@
       background-color: #ffe5e5;
       border-color: #e53935;
     }
+
+    /* Erklärungsfeld entfernt */
   </style>
 </head>
 <body>
@@ -161,7 +204,9 @@
     <input id="rightInput" placeholder="z.B. 2,4,6" />
     <br>
     <button onclick="startMerge()">Merge starten</button>
-    <button onclick="mergeStep()">Nächster Schritt</button>
+    <button id="nextStepBtn" onclick="highlightSmaller()">Nächster Schritt</button>
+
+    <!-- Erklärungsfeld entfernt -->
 
     <div class="deck-container">
       <div class="deck left">
@@ -184,16 +229,70 @@
 
   <aside>
     <h3>Beispielpaare</h3>
-    <div class="preset" onclick="applyPreset([1,4,6], [2,3,5])">[1,4,6] + [2,3,5]</div>
-    <div class="preset" onclick="applyPreset([2,5], [1,3,4])">[2,5] + [1,3,4]</div>
-    <div class="preset" onclick="applyPreset([10,12,15], [11,13])">[10,12,15] + [11,13]</div>
-    <div class="preset" onclick="applyPreset([1,2,3], [])">[1,2,3] + []</div>
-    <div class="preset" onclick="applyPreset([], [4,5,6])">[] + [4,5,6]</div>
-	<div class="preset" onclick="applyPreset([1,5,9], [4,6,8])">[1,5,9] + [4,6,8]</div>
+    
+    <!-- 3+3 Beispiele -->
+    <h4 onclick="toggleCategory('cat3x3')">3+3 Beispiele</h4>
+    <div id="cat3x3" class="category-content">
+      <div class="preset" onclick="applyPreset([1,3,6], [2,4,5])">[1,3,6] + [2,4,5]</div>
+      <div class="preset" onclick="applyPreset([10,30,50], [20,40,60])">[10,30,50] + [20,40,60]</div>
+      <div class="preset" onclick="applyPreset([3,7,11], [5,9,13])">[3,7,11] + [5,9,13]</div>
+    </div>
+    
+    <!-- 4+4 Beispiele -->
+    <h4 onclick="toggleCategory('cat4x4')">4+4 Beispiele</h4>
+    <div id="cat4x4" class="category-content">
+      <div class="preset" onclick="applyPreset([1,4,7,9], [2,3,6,8])">[1,4,7,9] + [2,3,6,8]</div>
+      <div class="preset" onclick="applyPreset([5,15,25,35], [10,20,30,40])">[5,15,25,35] + [10,20,30,40]</div>
+      <div class="preset" onclick="applyPreset([2,8,14,20], [4,10,16,22])">[2,8,14,20] + [4,10,16,22]</div>
+    </div>
+    
+    <!-- 8+8 Beispiele -->
+    <h4 onclick="toggleCategory('cat8x8')">8+8 Beispiele</h4>
+    <div id="cat8x8" class="category-content">
+      <div class="preset" onclick="applyPreset([1,3,5,7,9,11,13,15], [2,4,6,8,10,12,14,16])">[1,3,...,15] + [2,4,...,16]</div>
+      <div class="preset" onclick="applyPreset([2,4,6,8,10,12,14,16], [1,3,5,7,9,11,13,15])">[2,4,...,16] + [1,3,...,15]</div>
+      <div class="preset" onclick="applyPreset([1,8,15,22,29,36,43,50], [7,14,21,28,35,42,49,56])">[1,8,...,50] + [7,14,...,56]</div>
+    </div>
+    
+    <!-- Ungleiche Längen -->
+    <h4 onclick="toggleCategory('catUngleich')">Ungleiche Längen</h4>
+    <div id="catUngleich" class="category-content">
+      <div class="preset" onclick="applyPreset([2,5], [1,3,4])">[2,5] + [1,3,4] (2+3)</div>
+      <div class="preset" onclick="applyPreset([10,12,15], [11,13])">[10,12,15] + [11,13] (3+2)</div>
+    </div>
+    
+    <!-- Spezialfälle -->
+    <h4 onclick="toggleCategory('catSpezial')">Spezialfälle</h4>
+    <div id="catSpezial" class="category-content">
+      <div class="preset" onclick="applyPreset([1,2,3], [])">[1,2,3] + [] (3+0)</div>
+      <div class="preset" onclick="applyPreset([], [4,5,6])">[] + [4,5,6] (0+3)</div>
+    </div>
   </aside>
 
   <script>
     let left = [], right = [], merged = [];
+    let isHighlightPhase = false;
+    let highlightedSide = '';
+
+    // Beim Laden der Seite alle Kategorien außer der ersten einklappen
+    document.addEventListener('DOMContentLoaded', function() {
+      const categories = document.querySelectorAll('.category-content');
+      const headers = document.querySelectorAll('aside h4');
+      
+      // Erste Kategorie offen lassen, Rest einklappen
+      for (let i = 1; i < categories.length; i++) {
+        categories[i].classList.add('collapsed');
+        headers[i].classList.add('collapsed');
+      }
+    });
+
+    function toggleCategory(categoryId) {
+      const category = document.getElementById(categoryId);
+      const header = category.previousElementSibling;
+      
+      category.classList.toggle('collapsed');
+      header.classList.toggle('collapsed');
+    }
 
     function applyPreset(leftArr, rightArr) {
       document.getElementById('leftInput').value = leftArr.join(',');
@@ -231,29 +330,66 @@
       left = leftInput.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
       right = rightInput.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
       merged = [];
+      isHighlightPhase = false;
+      highlightedSide = '';
+      document.getElementById('nextStepBtn').textContent = 'Nächster Schritt';
       createDeckHTML(left, 'leftDeck', 'leftCount');
       createDeckHTML(right, 'rightDeck', 'rightCount');
       updateOutput();
     }
 
-    function mergeStep() {
+    function highlightSmaller() {
+      // Wenn wir bereits in der Hervorhebungsphase sind, führen wir den Move durch
+      if (isHighlightPhase) {
+        moveCard();
+        return;
+      }
+
       if (left.length === 0 && right.length === 0) {
         alert("Merge abgeschlossen!");
         return;
       }
 
+      // Bestimmen, welche Karte hervorgehoben werden soll
       if (left.length === 0) {
-        merged.push({ value: right.shift(), source: 'right' });
+        highlightCard('right');
       } else if (right.length === 0) {
-        merged.push({ value: left.shift(), source: 'left' });
+        highlightCard('left');
       } else {
         if (left[0] <= right[0]) {
-          merged.push({ value: left.shift(), source: 'left' });
+          highlightCard('left');
         } else {
-          merged.push({ value: right.shift(), source: 'right' });
+          highlightCard('right');
         }
       }
 
+      // Ändere den Button-Text für den nächsten Schritt
+      document.getElementById('nextStepBtn').textContent = "Karte hinzufügen";
+      isHighlightPhase = true;
+    }
+
+    function highlightCard(side) {
+      // Hebe die entsprechende Karte hervor
+      highlightedSide = side;
+      const deckId = side + 'Deck';
+      const cardElement = document.querySelector(`#${deckId} .card`);
+      if (cardElement) {
+        cardElement.classList.add('highlighted');
+      }
+    }
+
+    function moveCard() {
+      // Füge die hervorgehobene Karte zum Output hinzu
+      if (highlightedSide === 'left') {
+        merged.push({ value: left.shift(), source: 'left' });
+      } else {
+        merged.push({ value: right.shift(), source: 'right' });
+      }
+
+      // Entferne die Hervorhebung und aktualisiere die Ansicht
+      document.getElementById('nextStepBtn').textContent = "Nächster Schritt";
+      isHighlightPhase = false;
+      
       createDeckHTML(left, 'leftDeck', 'leftCount');
       createDeckHTML(right, 'rightDeck', 'rightCount');
       updateOutput();
