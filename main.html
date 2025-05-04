@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Merge Schritt-für-Schritt</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      display: flex;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      text-align: center;
+    }
+
+    aside {
+      width: 280px;
+      background-color: #ffffff;
+      border-left: 2px solid #ddd;
+      padding: 20px;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+    }
+
+    aside h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .preset {
+      background-color: #e9f1fb;
+      border: 1px solid #0078d7;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .preset:hover {
+      background-color: #d4e7fc;
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    input, button {
+      padding: 10px 15px;
+      margin: 8px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background-color: #0078d7;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+    }
+
+    .deck-container {
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+
+    .deck {
+      background-color: white;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      width: 160px;
+      height: 180px;
+      position: relative;
+    }
+
+    .deck.left .card {
+      background-color: #cce4ff;
+      border: 2px solid #0078d7;
+    }
+
+    .deck.right .card {
+      background-color: #ffcdd2;
+      border: 2px solid #e53935;
+    }
+
+    .deck-label {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .count {
+      font-size: 16px;
+      font-weight: bold;
+      color: #222;
+      margin-top: 120px;
+    }
+
+    .card {
+      width: 60px;
+      height: 90px;
+      border-radius: 10px;
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: bold;
+      box-shadow: 3px 3px 6px rgba(0,0,0,0.2);
+    }
+
+    .output-array {
+      margin-top: 50px;
+    }
+
+    .output-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 90px;
+      margin: 0 5px;
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      box-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      border: 2px solid;
+    }
+
+    .output-left {
+      background-color: #e6f3ff;
+      border-color: #0078d7;
+    }
+
+    .output-right {
+      background-color: #ffe5e5;
+      border-color: #e53935;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h2>Schritt-für-Schritt Merge-Visualisierung</h2>
+    <p>Gib zwei sortierte Zahlenreihen (kommagetrennt) ein oder wähle ein Beispiel rechts:</p>
+    <input id="leftInput" placeholder="z.B. 1,3,5" />
+    <input id="rightInput" placeholder="z.B. 2,4,6" />
+    <br>
+    <button onclick="startMerge()">Merge starten</button>
+    <button onclick="mergeStep()">Nächster Schritt</button>
+
+    <div class="deck-container">
+      <div class="deck left">
+        <div class="deck-label">Linkes Deck</div>
+        <div id="leftDeck"></div>
+        <div class="count" id="leftCount"></div>
+      </div>
+      <div class="deck right">
+        <div class="deck-label">Rechtes Deck</div>
+        <div id="rightDeck"></div>
+        <div class="count" id="rightCount"></div>
+      </div>
+    </div>
+
+    <div class="output-array">
+      <h3>Zusammengeführt:</h3>
+      <div id="outputArray"></div>
+    </div>
+  </main>
+
+  <aside>
+    <h3>Beispielpaare</h3>
+    <div class="preset" onclick="applyPreset([1,4,6], [2,3,5])">[1,4,6] + [2,3,5]</div>
+    <div class="preset" onclick="applyPreset([2,5], [1,3,4])">[2,5] + [1,3,4]</div>
+    <div class="preset" onclick="applyPreset([10,12,15], [11,13])">[10,12,15] + [11,13]</div>
+    <div class="preset" onclick="applyPreset([1,2,3], [])">[1,2,3] + []</div>
+    <div class="preset" onclick="applyPreset([], [4,5,6])">[] + [4,5,6]</div>
+	<div class="preset" onclick="applyPreset([1,5,9], [4,6,8])">[1,5,9] + [4,6,8]</div>
+  </aside>
+
+  <script>
+    let left = [], right = [], merged = [];
+
+    function applyPreset(leftArr, rightArr) {
+      document.getElementById('leftInput').value = leftArr.join(',');
+      document.getElementById('rightInput').value = rightArr.join(',');
+    }
+
+    function createDeckHTML(deck, containerId, countId) {
+      const container = document.getElementById(containerId);
+      const count = document.getElementById(countId);
+      container.innerHTML = '';
+      count.textContent = deck.length + ' Karte' + (deck.length === 1 ? '' : 'n') + ' übrig';
+
+      if (deck.length > 0) {
+        const topCard = document.createElement('div');
+        topCard.className = 'card';
+        topCard.textContent = deck[0];
+        container.appendChild(topCard);
+      }
+    }
+
+    function updateOutput() {
+      const output = document.getElementById('outputArray');
+      output.innerHTML = '';
+      merged.forEach(item => {
+        const box = document.createElement('div');
+        box.className = 'output-box ' + (item.source === 'left' ? 'output-left' : 'output-right');
+        box.textContent = item.value;
+        output.appendChild(box);
+      });
+    }
+
+    function startMerge() {
+      const leftInput = document.getElementById('leftInput').value;
+      const rightInput = document.getElementById('rightInput').value;
+      left = leftInput.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+      right = rightInput.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+      merged = [];
+      createDeckHTML(left, 'leftDeck', 'leftCount');
+      createDeckHTML(right, 'rightDeck', 'rightCount');
+      updateOutput();
+    }
+
+    function mergeStep() {
+      if (left.length === 0 && right.length === 0) {
+        alert("Merge abgeschlossen!");
+        return;
+      }
+
+      if (left.length === 0) {
+        merged.push({ value: right.shift(), source: 'right' });
+      } else if (right.length === 0) {
+        merged.push({ value: left.shift(), source: 'left' });
+      } else {
+        if (left[0] <= right[0]) {
+          merged.push({ value: left.shift(), source: 'left' });
+        } else {
+          merged.push({ value: right.shift(), source: 'right' });
+        }
+      }
+
+      createDeckHTML(left, 'leftDeck', 'leftCount');
+      createDeckHTML(right, 'rightDeck', 'rightCount');
+      updateOutput();
+    }
+  </script>
+</body>
+</html>
